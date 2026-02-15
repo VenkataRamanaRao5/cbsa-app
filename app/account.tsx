@@ -1,7 +1,8 @@
 import { useBehavioralCollector } from '@/services/BehavioralContext';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
-import { useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useRef, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type MenuItem = {
@@ -30,6 +31,14 @@ const BOTTOM_ACTIONS: MenuItem[] = [
 export default function AccountScreen() {
   const collector = useBehavioralCollector();
   const lastY = useRef(0);
+
+  useFocusEffect(
+      useCallback(() => {
+        collector?.recordTouchStart(0, 0, 0, 'PAGE_ENTER_ACCOUNT');
+        collector?.recordTouchEnd(0, 0, 0, 'PAGE_ENTER_ACCOUNT');
+        return () => {};
+      }, [collector])
+    );
 
   return (
     <View style={styles.container}>

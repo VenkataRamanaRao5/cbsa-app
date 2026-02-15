@@ -1,14 +1,15 @@
 import { useBehavioralCollector } from '@/services/BehavioralContext';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useAuth } from '../AuthContext';
 
@@ -49,6 +50,15 @@ export default function DashboardScreen() {
   const lastY = useRef(0);
 
   const tabs = ['Accounts', 'Save', 'Invest', 'Borrow', 'Shop & pay'];
+
+  // Record page navigation event when home tab comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      collector?.recordTouchStart(0, 0, 0, 'PAGE_ENTER_HOME');
+      collector?.recordTouchEnd(0, 0, 0, 'PAGE_ENTER_HOME');
+      return () => {};
+    }, [collector])
+  );
 
   return (
     <View style={styles.container}>

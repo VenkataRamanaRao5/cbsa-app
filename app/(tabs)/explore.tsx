@@ -1,7 +1,8 @@
 import { useBehavioralCollector } from '@/services/BehavioralContext';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -58,6 +59,15 @@ const APPLY_FOR: ServiceItem[] = [
 export default function MoreScreen() {
   const collector = useBehavioralCollector();
   const lastY = useRef(0);
+
+  // Record page navigation event when explore tab comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      collector?.recordTouchStart(0, 0, 0, 'PAGE_ENTER_MORE');
+      collector?.recordTouchEnd(0, 0, 0, 'PAGE_ENTER_MORE');
+      return () => {};
+    }, [collector])
+  );
 
   const ServiceCard = ({ item, section }: { item: ServiceItem; section: string }) => (
     <TouchableOpacity

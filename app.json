@@ -30,7 +30,8 @@
         "ACCESS_NETWORK_STATE",
         "ACCESS_WIFI_STATE",
         "READ_PHONE_STATE"
-      ]
+      ],
+      "package": "com.the_fifth_force.cbsa"
     },
     "web": {
       "output": "static",
@@ -54,6 +55,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "42366249-84e7-4d4e-8416-7d9355497202"
+      }
     }
   }
 }

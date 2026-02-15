@@ -28,7 +28,7 @@ export default function LoginScreen() {
   const [keypadSequence, setKeypadSequence] = useState<PINKeypadKey[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showIPConfig, setShowIPConfig] = useState(false);
-  const [backendIP, setBackendIP] = useState('localhost');
+  const [backendIP, setBackendIP] = useState('192.168.1.3');
   const [backendPort, setBackendPort] = useState('8000');
   const [testingConnection, setTestingConnection] = useState(false);
 

@@ -1,5 +1,6 @@
 import { useBehavioralCollector } from '@/services/BehavioralContext';
-import { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function PayScreen() {
@@ -7,6 +8,15 @@ export default function PayScreen() {
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const collector = useBehavioralCollector();
+
+  // Record page navigation event when pay tab comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      collector?.recordTouchStart(0, 0, 0, 'PAGE_ENTER_PAY');
+      collector?.recordTouchEnd(0, 0, 0, 'PAGE_ENTER_PAY');
+      return () => {};
+    }, [collector])
+  );
 
   return (
     <View style={styles.container}>
@@ -50,11 +60,11 @@ export default function PayScreen() {
         onPress={() => step === 1 ? setStep(2) : null}
         onPressIn={(e) => {
           const { pageX, pageY, force } = e.nativeEvent;
-          collector?.recordTouchStart(pageX, pageY, force ?? 0, "PAY_BUTTON");
+          collector?.recordTouchStart(pageX, pageY, force ?? 0, `PAY_BUTTON_${step}`);
         }}
         onPressOut={(e) => {
           const { pageX, pageY, force } = e.nativeEvent;
-          collector?.recordTouchEnd(pageX, pageY, force ?? 0, "PAY_BUTTON");
+          collector?.recordTouchEnd(pageX, pageY, force ?? 0, `PAY_BUTTON_${step}`);
         }}
       >
         <Text style={styles.buttonText}>

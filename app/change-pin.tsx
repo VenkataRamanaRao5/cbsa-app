@@ -1,6 +1,7 @@
 import { useBehavioralCollector } from '@/services/BehavioralContext';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useState, useCallback } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ChangePinScreen() {
@@ -9,6 +10,14 @@ export default function ChangePinScreen() {
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const collector = useBehavioralCollector();
+
+  useFocusEffect(
+    useCallback(() => {
+      collector?.recordTouchStart(0, 0, 0, 'PAGE_ENTER_PIN_CHANGE');
+      collector?.recordTouchEnd(0, 0, 0, 'PAGE_ENTER_PIN_CHANGE');
+      return () => {};
+    }, [collector])
+  );
 
   const currentValue = step === 1 ? oldPin : step === 2 ? newPin : confirmPin;
 

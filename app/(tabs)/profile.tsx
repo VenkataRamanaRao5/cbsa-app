@@ -1,10 +1,22 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useBehavioralCollector } from '@/services/BehavioralContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
+import { useCallback } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../AuthContext';
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
+  const collector = useBehavioralCollector();
+
+  // Record page navigation event when profile tab comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      collector?.recordTouchStart(0, 0, 0, 'PAGE_ENTER_PROFILE');
+      collector?.recordTouchEnd(0, 0, 0, 'PAGE_ENTER_PROFILE');
+      return () => {};
+    }, [collector])
+  );
 
   return (
     <View style={styles.container}>

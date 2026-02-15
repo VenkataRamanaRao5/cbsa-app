@@ -1,6 +1,7 @@
 import { useBehavioralCollector } from '@/services/BehavioralContext';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useRef, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -28,6 +29,15 @@ export default function CardsScreen() {
   const lastY = useRef(0);
 
   const tabs: CardTab[] = ['Debit cards', 'Credit card', 'Wearable'];
+
+  // Record page navigation event when cards tab comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      collector?.recordTouchStart(0, 0, 0, 'PAGE_ENTER_CARDS');
+      collector?.recordTouchEnd(0, 0, 0, 'PAGE_ENTER_CARDS');
+      return () => {};
+    }, [collector])
+  );
 
   return (
     <View style={styles.container}>
