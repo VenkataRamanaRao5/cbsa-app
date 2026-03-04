@@ -1,6 +1,5 @@
 name: Build Android Standalone APK
 
-# This tells GitHub to run this script every time you push to the 'main' branch
 on:
   push:
     branches:
@@ -8,46 +7,51 @@ on:
 
 jobs:
   build:
-    # We use Ubuntu because Linux servers are much faster and cheaper than Windows ones
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Get your code from GitHub
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Set up Node.js (Matching your local v22)
+      # 1. Node.js with built-in NPM caching
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+          cache: 'npm' # <--- CACHE: Remembers your node_modules
 
-      # 3. Set up Java 17 (Crucial for React Native / Expo)
+      # 2. Java with built-in Gradle caching
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle' # <--- CACHE: Remembers Android SDKs and downloaded Gradle libraries
 
-      # 4. Install your NPM dependencies
       - name: Install Node Modules
         run: npm install
 
-      # 5. Generate the Android folder cleanly (Just in case it isn't in your repo)
+      # 3. Cache the heavy C++ (NDK) compiled files 
+      # This is the biggest time-saver for React Native New Architecture
+      - name: Cache Android C++ Build (NDK)
+        uses: actions/cache@v4
+        with:
+          path: android/app/.cxx
+          key: ${{ runner.os }}-cxx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-cxx-
+
       - name: Expo Prebuild
         run: npx expo prebuild --platform android --clean
 
-      # 6. Do the heavy lifting! Build the Release APK
+      # 4. Build with the --build-cache flag to enable incremental compilation
       - name: Build APK
         run: |
           cd android
-          ./gradlew assembleRelease
-        # Giving Gradle plenty of RAM so the GitHub runner doesn't crash
+          ./gradlew assembleRelease --build-cache -x lint -x lintVitalRelease
         env:
-          GRADLE_OPTS: "-Xmx4096m"
+          GRADLE_OPTS: "-Xmx4096m -Dorg.gradle.caching=true"
 
-      # 7. Take the finished APK and upload it so you can download it
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
