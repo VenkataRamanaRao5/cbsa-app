@@ -13,26 +13,30 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. Node.js with built-in NPM caching
+      # 1. Setup Node & NPM Cache first
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm' # <--- CACHE: Remembers your node_modules
+          cache: 'npm'
 
-      # 2. Java with built-in Gradle caching
+      # 2. Install dependencies
+      - name: Install Node Modules
+        run: npm install
+
+      # 3. GENERATE the Android folder (This creates the .gradle files)
+      - name: Expo Prebuild
+        run: npx expo prebuild --platform android --clean
+
+      # 4. NOW set up Java and Gradle Cache (It will find the files now!)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'gradle' # <--- CACHE: Remembers Android SDKs and downloaded Gradle libraries
+          cache: 'gradle' 
 
-      - name: Install Node Modules
-        run: npm install
-
-      # 3. Cache the heavy C++ (NDK) compiled files 
-      # This is the biggest time-saver for React Native New Architecture
+      # 5. Cache the heavy C++ NDK files
       - name: Cache Android C++ Build (NDK)
         uses: actions/cache@v4
         with:
@@ -41,10 +45,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cxx-
 
-      - name: Expo Prebuild
-        run: npx expo prebuild --platform android --clean
-
-      # 4. Build with the --build-cache flag to enable incremental compilation
+      # 6. Build the APK (with Lint checks disabled to prevent false-positive crashes)
       - name: Build APK
         run: |
           cd android
@@ -52,6 +53,7 @@ jobs:
         env:
           GRADLE_OPTS: "-Xmx4096m -Dorg.gradle.caching=true"
 
+      # 7. Upload the finished file
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
