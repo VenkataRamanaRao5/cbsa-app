@@ -1,5 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
@@ -31,6 +31,7 @@ function RootLayoutNav() {
       });
     } else {
       behavioralService.stop();
+      router.replace('/login');
     }
   }, [isLoggedIn]);
 
