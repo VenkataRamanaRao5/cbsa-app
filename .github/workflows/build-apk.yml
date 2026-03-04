@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -53,9 +55,23 @@ jobs:
         env:
           GRADLE_OPTS: "-Xmx4096m -Dorg.gradle.caching=true"
 
-      # 7. Upload the finished file
+      # 7. Upload the finished file as a workflow artifact
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+
+      # 8. Publish a GitHub Release with the APK attached
+      - name: Set short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "Build #${{ github.run_number }} (${{ env.SHORT_SHA }})"
+          body: |
+            Automated Android APK build from commit ${{ github.sha }}.
+          files: android/app/build/outputs/apk/release/app-release.apk
+          prerelease: true
