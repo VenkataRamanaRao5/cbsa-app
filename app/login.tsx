@@ -22,6 +22,23 @@ interface PINKeypadKey {
   label: string;
 }
 
+/**
+ * Returns 'http' for raw IP addresses and localhost, 'https' for hostnames.
+ * Mirrors the logic in ConfigService so the UI preview matches the actual
+ * protocol used by the service.
+ *
+ * Anything that structurally looks like an IPv4 address (four dot-separated
+ * numeric groups) is treated as an IP — the octet range is intentionally not
+ * re-validated here because ConfigService.setConfig() already rejects invalid
+ * addresses before they can be saved.
+ */
+function getProtocolForHost(host: string): 'http' | 'https' {
+  if (host === 'localhost' || host === '127.0.0.1') return 'http';
+  // Treat anything that structurally looks like an IPv4 address as an IP
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(host)) return 'http';
+  return 'https';
+}
+
 export default function LoginScreen() {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
@@ -115,8 +132,26 @@ export default function LoginScreen() {
       // Update WebSocket service URL
       await wsService.updateURL();
 
-      // Test connection
-      const isConnected = await configService.testConnection();
+      // Test connection — propagates network-level errors (e.g. cleartext
+      // policy, connection refused) so we can show the real reason.
+      let isConnected = false;
+      try {
+        isConnected = await configService.testConnection();
+      } catch (testError) {
+        setTestingConnection(false);
+        const reason = testError instanceof Error ? testError.message : String(testError);
+        // Only suggest Wi-Fi issues when the user is targeting a local IP address
+        const isLocalIP = getProtocolForHost(backendIP.trim()) === 'http';
+        const hint = isLocalIP
+          ? '\n\nIf you are connecting to a local IP, make sure both devices are on the same Wi-Fi network.'
+          : '';
+        Alert.alert(
+          'Connection Failed',
+          `Configuration saved, but the backend could not be reached.\n\nReason: ${reason}${hint}`,
+          [{ text: 'OK', onPress: () => setShowIPConfig(false) }]
+        );
+        return;
+      }
 
       setTestingConnection(false);
 
@@ -126,7 +161,7 @@ export default function LoginScreen() {
       } else {
         Alert.alert(
           'Warning',
-          'Configuration saved, but backend is not responding.\nMake sure your backend is running at the specified address.',
+          'Configuration saved, but the backend returned an unexpected response.\nMake sure your backend is running at the specified address.',
           [{ text: 'OK', onPress: () => setShowIPConfig(false) }]
         );
       }
@@ -183,6 +218,14 @@ export default function LoginScreen() {
 
   const getKeypadRow = (start: number) => keypadSequence.slice(start, start + 3);
 
+  // Derive correct protocol for the endpoint preview:
+  // IPs (including 192.168.x.x) and localhost → http, hostnames → https.
+  // Port is omitted only when using https with its default port (443).
+  const displayProto = getProtocolForHost(backendIP);
+  const displayEndpoint = `${displayProto}://${backendIP}${
+    displayProto === 'https' && backendPort === '443' ? '' : `:${backendPort}`
+  }`;
+
   // IP Configuration UI
   if (showIPConfig) {
     return (
@@ -219,7 +262,7 @@ export default function LoginScreen() {
               <Text style={styles.configInfoText}>
                 Endpoint:{'\n'}
                 <Text style={styles.configInfoBold}>
-                  https://{backendIP}{backendPort !== '443' ? `:${backendPort}` : ''}
+                  {displayEndpoint}
                 </Text>
               </Text>
             </View>

@@ -126,28 +126,27 @@ class ConfigService {
   }
 
   /**
-   * Check if backend is accessible
+   * Check if backend is accessible.
+   * Throws on network-level failure so callers can surface the real reason.
    */
   async testConnection(): Promise<boolean> {
-    try {
-      const restURL = await this.getRestURL();
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const restURL = await this.getRestURL();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      try {
-        const response = await fetch(`${restURL}/health`, {
-          method: 'GET',
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        return response.ok;
-      } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-      }
+    try {
+      const response = await fetch(`${restURL}/health`, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response.ok;
     } catch (error) {
-      console.error('[ConfigService] Connection test failed:', error);
-      return false;
+      clearTimeout(timeoutId);
+      // Re-throw so the caller can display the real failure reason
+      // (e.g. "Cleartext HTTP traffic not permitted" on Android, or
+      //  "The user aborted a request" on timeout).
+      throw error;
     }
   }
 

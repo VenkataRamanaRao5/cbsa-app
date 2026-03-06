@@ -25,11 +25,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_NETWORK_STATE",
-        "ACCESS_WIFI_STATE",
-        "READ_PHONE_STATE",
+        "INTERNET",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
         "ACCESS_NETWORK_STATE",
@@ -55,7 +51,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "./plugins/withAndroidCleartextTraffic"
     ],
     "experiments": {
       "typedRoutes": true,
