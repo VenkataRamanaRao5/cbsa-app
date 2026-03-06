@@ -22,6 +22,21 @@ interface PINKeypadKey {
   label: string;
 }
 
+/**
+ * Returns 'http' for raw IP addresses and localhost, 'https' for hostnames.
+ * Mirrors the logic in ConfigService so the UI preview matches the actual
+ * protocol used by the service.
+ */
+function getProtocolForHost(host: string): 'http' | 'https' {
+  if (host === 'localhost' || host === '127.0.0.1') return 'http';
+  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (ipv4Regex.test(host)) {
+    const octets = host.split('.').map(Number);
+    if (octets.every(o => o >= 0 && o <= 255)) return 'http';
+  }
+  return 'https';
+}
+
 export default function LoginScreen() {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
@@ -183,6 +198,14 @@ export default function LoginScreen() {
 
   const getKeypadRow = (start: number) => keypadSequence.slice(start, start + 3);
 
+  // Derive correct protocol for the endpoint preview:
+  // IPs (including 192.168.x.x) and localhost → http, hostnames → https.
+  // Port is omitted only when using https with its default port (443).
+  const displayProto = getProtocolForHost(backendIP);
+  const displayEndpoint = `${displayProto}://${backendIP}${
+    displayProto === 'https' && backendPort === '443' ? '' : `:${backendPort}`
+  }`;
+
   // IP Configuration UI
   if (showIPConfig) {
     return (
@@ -219,7 +242,7 @@ export default function LoginScreen() {
               <Text style={styles.configInfoText}>
                 Endpoint:{'\n'}
                 <Text style={styles.configInfoBold}>
-                  https://{backendIP}{backendPort !== '443' ? `:${backendPort}` : ''}
+                  {displayEndpoint}
                 </Text>
               </Text>
             </View>
