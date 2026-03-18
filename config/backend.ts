@@ -4,8 +4,8 @@
 
 // Development (local network)
 const DEV_CONFIG = {
-  WS_URL: 'ws://192.168.1.3:8000/ws/behaviour',
-  REST_URL: 'http://192.168.1.3:8000',
+  WS_URL: 'ws://10.142.163.253:8000/ws/behaviour',
+  REST_URL: 'http://10.142.163.253:8000',
 };
 
 // Production — Azure App Service

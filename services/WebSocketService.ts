@@ -126,8 +126,13 @@ export class WebSocketService {
           this.scheduleReconnect();
         };
 
-        this.ws.onerror = (error) => {
-          console.error('[WebSocket] Error:', error);
+        this.ws.onerror = (error: any) => {
+          const errorMsg = error?.message || 'Connection failed';
+          console.error('[WebSocket] Error:', {
+            message: errorMsg,
+            url: WS_URL,
+            readyState: this.ws?.readyState
+          });
           this.isConnecting = false;
           // Don't reject - let onclose handle reconnection
         };
@@ -157,9 +162,14 @@ export class WebSocketService {
           }
         }, CONNECTION_TIMEOUT_MS);
 
-      } catch (error) {
+      } catch (error: any) {
         this.isConnecting = false;
-        reject(error);
+        const errorMsg = error?.message || 'Failed to create WebSocket connection';
+        console.error('[WebSocket] Connection error:', {
+          error: errorMsg,
+          url: WS_URL
+        });
+        reject(new Error(`WebSocket connection failed: ${errorMsg}`));
       }
     });
   }

@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { BehavioralProvider } from '@/services/BehavioralContext';
 import { behavioralService } from '@/services/BehavioralService';
+import { TrustBlockingModal } from '@/components/TrustBlockingModal';
 import { wsService } from '@/services/WebSocketService';
 import { useEffect } from 'react';
 import { Alert } from 'react-native';
@@ -42,17 +43,15 @@ function RootLayoutNav() {
     }
   }, [isLoggedIn, isNavigationReady]);
 
-  let content = (
+  const screens = (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         {isLoggedIn ? (
-          // User is logged in - show all tabs
           <Stack.Screen name="(tabs)" options={{
             headerShown: true,
             headerTitle: 'Bank',
           }} />
         ) : (
-          // User is not logged in - show only login tab
           <Stack.Screen
             name="login"
             options={{
@@ -74,16 +73,22 @@ function RootLayoutNav() {
     </ThemeProvider>
   );
 
+  if (!isLoggedIn) {
+    return screens;
+  }
+
+  // When logged in, wrap screens in BehavioralProvider so the WebSocket
+  // connection and trust tracking are active. TrustBlockingModal sits inside
+  // the provider so it can read trustState and clearBlock directly.
   return (
-    isLoggedIn ?
-      <BehavioralProvider>
-        {content}
-      </BehavioralProvider> : content 
+    <BehavioralProvider>
+      {screens}
+      <TrustBlockingModal />
+    </BehavioralProvider>
   );
 }
 
 export default function RootLayout() {
-
   return (
     <AuthProvider>
       <RootLayoutNav />
