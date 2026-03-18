@@ -61,7 +61,7 @@ export function TrustBlockingModal() {
     logout();       // navigate to login screen; starts fresh session
   };
 
-  const { trustScore, consecutiveRisk, anomalyIndicator, similarityScore, blockTrigger } = trustState;
+  const { trustScore, consecutiveRisk, anomalyIndicator, similarityScore } = trustState;
 
   return (
     <Modal
@@ -93,17 +93,6 @@ export function TrustBlockingModal() {
             <MetricRow label="Anomaly Signal" value={formatScore(anomalyIndicator)} />
             <MetricRow label="Profile Match"  value={formatScore(similarityScore)} />
           </View>
-
-          {/* Reason */}
-          <Text style={styles.reason}>
-            {blockTrigger === 'fund_transfer_fallback'
-              ? 'Suspicious fund transfer activity detected.'
-              : consecutiveRisk >= 3
-              ? `${consecutiveRisk} consecutive RISK decisions recorded.`
-              : trustScore !== null && trustScore < 0.20
-              ? `Trust score collapsed to ${formatScore(trustScore)}.`
-              : 'Behavioral anomaly threshold exceeded.'}
-          </Text>
 
           {/* Re-auth button */}
           <TouchableOpacity style={styles.button} onPress={handleReauthenticate} activeOpacity={0.85}>
@@ -226,13 +215,6 @@ const styles = StyleSheet.create({
   },
   metricDanger: {
     color: '#e74c3c',
-  },
-  reason: {
-    fontSize: 12,
-    color: '#e67e22',
-    textAlign: 'center',
-    marginBottom: 20,
-    fontStyle: 'italic',
   },
   button: {
     backgroundColor: '#e74c3c',

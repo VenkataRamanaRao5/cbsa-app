@@ -46,7 +46,6 @@ type BehavioralCtx = {
   trustState: TrustState;
   clearBlock: () => void;                        // called after re-authentication to reset block
   onFundTransferButtonPress: () => void;         // fallback guard: tracks fund-transfer presses
-  resetFundTransferPressCount: () => void;       // call when a transfer completes or screen is left
 };
 
 const Context = createContext<BehavioralCtx>({
@@ -56,7 +55,6 @@ const Context = createContext<BehavioralCtx>({
   trustState: INITIAL_TRUST_STATE,
   clearBlock: () => {},
   onFundTransferButtonPress: () => {},
-  resetFundTransferPressCount: () => {},
 });
 
 // ── Provider ─────────────────────────────────────────────────────────────────
@@ -93,9 +91,10 @@ export function BehavioralProvider({ children }: { children: React.ReactNode }) 
     }));
   };
 
-  // Fallback guard: block the session if the fund transfer button is pressed
-  // FUND_TRANSFER_PRESS_THRESHOLD times in a row without a successful transfer.
-  // A 5-second warning window is given before the block is applied.
+  // Fallback guard: block the session unconditionally once the fund transfer
+  // button is pressed FUND_TRANSFER_PRESS_THRESHOLD times. The 5-second
+  // countdown cannot be cancelled by navigation — only clearBlock() (called on
+  // re-authentication) resets the press counter.
   const onFundTransferButtonPress = () => {
     fundTransferPressCountRef.current += 1;
     console.log(`[FallbackGuard] Fund transfer press #${fundTransferPressCountRef.current}`);
@@ -114,17 +113,6 @@ export function BehavioralProvider({ children }: { children: React.ReactNode }) 
         }));
       }, FUND_TRANSFER_BLOCK_DELAY_MS);
     }
-  };
-
-  // Reset the press counter when a transfer completes or the screen is left.
-  // This prevents legitimate users who make multiple transfers from being blocked.
-  const resetFundTransferPressCount = () => {
-    if (fundTransferBlockTimerRef.current !== null) {
-      clearTimeout(fundTransferBlockTimerRef.current);
-      fundTransferBlockTimerRef.current = null;
-    }
-    fundTransferPressCountRef.current = 0;
-    console.log('[FallbackGuard] Press counter reset');
   };
 
   useEffect(() => {
@@ -238,7 +226,6 @@ export function BehavioralProvider({ children }: { children: React.ReactNode }) 
       trustState,
       clearBlock,
       onFundTransferButtonPress,
-      resetFundTransferPressCount,
     }}>
       {children}
     </Context.Provider>
@@ -269,8 +256,4 @@ export function useTrustState() {
 
 export function useFundTransferBlock() {
   return useContext(Context).onFundTransferButtonPress;
-}
-
-export function useResetFundTransferCount() {
-  return useContext(Context).resetFundTransferPressCount;
 }
