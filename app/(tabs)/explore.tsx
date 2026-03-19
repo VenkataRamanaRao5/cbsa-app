@@ -76,7 +76,11 @@ export default function MoreScreen() {
         if (item.name === 'My account') {
           router.push('/account');
         } else if (item.name === 'Transaction history') {
-          router.push('/transaction/1');
+          router.push('/passbook');
+        } else if (item.name === 'Passbook') {
+          router.push('/passbook');
+        } else if (item.name === 'Fund transfer') {
+          router.push('/fund-transfer');
         }
       }}
       onPressIn={(e) => {
