@@ -243,7 +243,7 @@ export default function DashboardScreen() {
                   key={service.id} 
                   service={service} 
                   collector={collector}
-                  onFundTransferPress={service.id === '1' ? onFundTransferButtonPress : undefined}
+                  onFundTransferPress={service.id === '16' ? onFundTransferButtonPress : undefined}
                 />
               ))}
             </View>
@@ -261,18 +261,31 @@ function ServiceCard({
 }: { 
   service: Service;
   collector: any;
-  // Defined only for the Fund Transfer tile (id='1'); undefined for all other tiles
-  // (which had no onPress action in the original code either).
+  // Defined only for the "Send money abroad" tile (id='16') — a no-op destination
+  // that acts as the fallback press-counter canary for anomaly detection.
+  // Fund Transfer (id='1') is a real navigatable flow and no longer increments the counter.
   onFundTransferPress?: () => void;
 }) {
   const handlePress = () => {
     if (onFundTransferPress) {
+      // "Send money abroad" is a no-op tile used as canary for fallback anomaly detection.
       onFundTransferPress();
-      router.push('/fund-transfer');
       return;
     }
     // Route specific service tiles
-    if (service.name === 'Mobile recharge') {
+    if (service.id === '1') {
+      router.push('/fund-transfer');
+    } else if (service.id === '2') {
+      router.push('/fd-sdp');
+    } else if (service.id === '5') {
+      router.push('/ipo');
+    } else if (service.id === '13') {
+      router.push({ pathname: '/ticket-booking/search', params: { type: 'flight' } } as any);
+    } else if (service.id === '14') {
+      router.push({ pathname: '/ticket-booking/search', params: { type: 'bus' } } as any);
+    } else if (service.id === '15') {
+      router.push({ pathname: '/ticket-booking/search', params: { type: 'train' } } as any);
+    } else if (service.name === 'Mobile recharge') {
       router.push('/(tabs)/pay');
     } else if (service.name === 'Credit score') {
       router.push('/account');
