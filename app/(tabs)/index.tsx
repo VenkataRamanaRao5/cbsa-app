@@ -230,7 +230,7 @@ export default function DashboardScreen() {
               collector?.recordTouchEnd(pageX, pageY, force ?? 0, 'TOUCH_TRENDING_TOGGLE');
             }}
           >
-            <Text style={styles.trendingTitle}>What's trending</Text>
+            <Text style={styles.trendingTitle}>What&apos;s trending</Text>
             <View style={styles.trendingToggle}>
               <Text style={styles.toggleIcon}>{trendingExpanded ? '🔼' : '🔽'}</Text>
             </View>
@@ -265,10 +265,24 @@ function ServiceCard({
   // (which had no onPress action in the original code either).
   onFundTransferPress?: () => void;
 }) {
+  const handlePress = () => {
+    if (onFundTransferPress) {
+      onFundTransferPress();
+      router.push('/fund-transfer');
+      return;
+    }
+    // Route specific service tiles
+    if (service.name === 'Mobile recharge') {
+      router.push('/(tabs)/pay');
+    } else if (service.name === 'Credit score') {
+      router.push('/account');
+    }
+  };
+
   return (
     <TouchableOpacity 
       style={styles.serviceCard}
-      onPress={onFundTransferPress}
+      onPress={handlePress}
       onPressIn={(e) => {
         const { pageX, pageY, force } = e.nativeEvent;
         collector?.recordTouchStart(pageX, pageY, force ?? 0, `TOUCH_SERVICE_${service.id}`);
