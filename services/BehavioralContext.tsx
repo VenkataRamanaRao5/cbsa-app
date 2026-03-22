@@ -144,46 +144,51 @@ export function BehavioralProvider({ children }: { children: React.ReactNode }) 
         return;
       }
 
-      // ── Parse trust result ───────────────────────────────────────────────
-      const decision: TrustDecision = data.decision ?? null;
-      const trustScore: number | null = data.trust_score ?? null;
-      const anomaly: number | null = data.anomaly_indicator ?? null;
-      const similarity: number | null = data.similarity_score ?? null;
+      setTrustState(prev => {
+        if (prev.isBlocked) return { ...prev, trustScore : (prev.trustScore ?? 0.5) - 0.5 };
 
-      // Update consecutive counters
-      if (decision === 'RISK') {
-        consecutiveRiskRef.current += 1;
-        consecutiveUncertainRef.current = 0;
-      } else if (decision === 'UNCERTAIN') {
-        consecutiveUncertainRef.current += 1;
-        consecutiveRiskRef.current = 0;
-      } else {
-        consecutiveRiskRef.current = 0;
-        consecutiveUncertainRef.current = 0;
-      }
+        // ── Parse trust result ───────────────────────────────────────────────
+        const decision: TrustDecision = data.decision ?? null;
+        const trustScore: number | null = data.trust_score ?? null;
+        const anomaly: number | null = data.anomaly_indicator ?? null;
+        const similarity: number | null = data.similarity_score ?? null;
 
-      const consecutiveRisk = consecutiveRiskRef.current;
-      const consecutiveUncertain = consecutiveUncertainRef.current;
+        // Update consecutive counters
+        if (decision === 'RISK') {
+          consecutiveRiskRef.current += 1;
+          consecutiveUncertainRef.current = 0;
+        } else if (decision === 'UNCERTAIN') {
+          consecutiveUncertainRef.current += 1;
+          consecutiveRiskRef.current = 0;
+        } else {
+          consecutiveRiskRef.current = 0;
+          consecutiveUncertainRef.current = 0;
+        }
 
-      // Block when RISK threshold is crossed OR trust collapses to near-zero
-      const shouldBlock =
-        consecutiveRisk >= CONSECUTIVE_RISK_BLOCK_THRESHOLD ||
-        (trustScore !== null && trustScore < 0.20);
+        const consecutiveRisk = consecutiveRiskRef.current;
+        const consecutiveUncertain = consecutiveUncertainRef.current;
 
-      console.log(
-        `[Trust] decision=${decision} score=${trustScore?.toFixed(3)} ` +
-        `risk_streak=${consecutiveRisk} blocked=${shouldBlock}`
-      );
+        // Block when RISK threshold is crossed OR trust collapses to near-zero
+        const shouldBlock =
+          consecutiveRisk >= CONSECUTIVE_RISK_BLOCK_THRESHOLD ||
+          (trustScore !== null && trustScore < 0.20);
 
-      setTrustState({
-        trustScore,
-        decision,
-        consecutiveRisk,
-        consecutiveUncertain,
-        anomalyIndicator: anomaly,
-        similarityScore: similarity,
-        isBlocked: shouldBlock,
-        lastUpdated: Date.now(),
+        console.log(
+          `[Trust] decision=${decision} score=${trustScore?.toFixed(3)} ` +
+          `risk_streak=${consecutiveRisk} blocked=${shouldBlock}`
+        );
+
+        return {
+          trustScore,
+          decision,
+          consecutiveRisk,
+          consecutiveUncertain,
+          anomalyIndicator: anomaly,
+          similarityScore: similarity,
+          isBlocked: shouldBlock,
+          blockTrigger: shouldBlock ? 'trust_engine' : undefined,
+          lastUpdated: Date.now(),
+        };
       });
     });
 
