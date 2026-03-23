@@ -247,6 +247,13 @@ export class WebSocketService {
     return this.sessionId || '';
   }
 
+  /**
+   * Get current user ID
+   */
+  getUserId(): string {
+    return this.userId || '';
+  }
+
   // ───── Private Methods ─────
 
   private queueMessage(data: any) {
