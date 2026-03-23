@@ -1,5 +1,6 @@
 import * as Battery from "expo-battery";
 import * as Cellular from "expo-cellular";
+import * as Crypto from "expo-crypto";
 import * as Device from "expo-device";
 import * as Location from "expo-location";
 import * as Network from "expo-network";
@@ -105,6 +106,11 @@ export class BehavioralCollector {
   private windowStartTs = Date.now();
   private lastEmitTs = Date.now();
 
+  // ───── NONCE TRACKING ─────
+  private getUserIdFn: (() => string) | null = null;
+  private usedNonces = new Set<string>();
+  private static readonly MAX_NONCE_CACHE = 10_000;
+
   // ───── LISTENERS ─────
   private accelSub: any = null;
   private gyroSub: any = null;
@@ -112,7 +118,8 @@ export class BehavioralCollector {
   private appStateSub: any = null;
   private dimSub: any = null;
 
-  constructor(private onEmit?: (data: EmittedBehavioralPayload) => void) {
+  constructor(private onEmit?: (data: EmittedBehavioralPayload) => void, getUserId?: () => string) {
+    this.getUserIdFn = getUserId ?? null;
     // Sensors
     console.log("Hello")
     Accelerometer.setUpdateInterval(50);
@@ -218,6 +225,23 @@ export class BehavioralCollector {
   /**
    * Perform emission and reset buffers.
    */
+  private async generateNonce(): Promise<string> {
+    const userId = this.getUserIdFn?.() ?? '';
+    let nonce: string;
+    do {
+      const bytes = await Crypto.getRandomBytesAsync(16);
+      const hex = Array.from(bytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      nonce = userId ? `${userId}_${hex}` : hex;
+    } while (this.usedNonces.has(nonce));
+    if (this.usedNonces.size >= BehavioralCollector.MAX_NONCE_CACHE) {
+      this.usedNonces.clear();
+    }
+    this.usedNonces.add(nonce);
+    return nonce;
+  }
+
   private async emitAndReset() {
     console.log("RESET")
     const payload = await this.emitVector();
@@ -232,7 +256,7 @@ export class BehavioralCollector {
 
     const payload = {
       timestamp: Date.now(),
-      nonce: cryptoRandom(),
+      nonce: await this.generateNonce(),
       vector,
       eventType: this.lastEventType,
       deviceInfo: this.deviceInfo || await this.collectDeviceInfo(),
@@ -954,5 +978,3 @@ function normRange(x: number, min: number, max: number) {
   if (max === min) return 0;
   return clamp01((x - min) / (max - min));
 }
-
-const cryptoRandom = () => Math.random().toString(36).slice(2);

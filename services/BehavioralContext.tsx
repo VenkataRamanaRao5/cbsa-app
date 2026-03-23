@@ -232,7 +232,7 @@ export function BehavioralProvider({ children }: { children: React.ReactNode }) 
       if (!sent) {
         console.log('[BehavioralProvider] Message queued (WebSocket not connected)');
       }
-    });
+    }, () => wsService.getUserId());
 
     ref.current.start();
   }
