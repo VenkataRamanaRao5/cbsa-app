@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { BehavioralCollector, EmittedBehavioralPayload } from './BehavioralCollector';
 import { wsService } from './WebSocketService';
+import { BACKEND_CONFIG } from '@/config/backend';
 
 // ── Trust state types ────────────────────────────────────────────────────────
 
@@ -20,6 +21,19 @@ export interface TrustState {
 const INITIAL_TRUST_STATE: TrustState = {
   trustScore: null,
   decision: null,
+  consecutiveRisk: 0,
+  consecutiveUncertain: 0,
+  anomalyIndicator: null,
+  similarityScore: null,
+  isBlocked: false,
+  lastUpdated: null,
+};
+
+// Fixed trust state used when MOCK_MODE is enabled (no backend required)
+const MOCK_TRUST_SCORE = 0.8;
+const MOCK_TRUST_STATE: TrustState = {
+  trustScore: MOCK_TRUST_SCORE,
+  decision: 'SAFE',
   consecutiveRisk: 0,
   consecutiveUncertain: 0,
   anomalyIndicator: null,
@@ -63,7 +77,9 @@ const Context = createContext<BehavioralCtx>({
 export function BehavioralProvider({ children }: { children: React.ReactNode }) {
   const ref = useRef<BehavioralCollector | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [trustState, setTrustState] = useState<TrustState>(INITIAL_TRUST_STATE);
+  const [trustState, setTrustState] = useState<TrustState>(
+    BACKEND_CONFIG.MOCK_MODE ? MOCK_TRUST_STATE : INITIAL_TRUST_STATE
+  );
 
   // Track consecutive counts across messages using a ref so the callback
   // always captures the latest value without stale closure issues.
@@ -128,6 +144,11 @@ export function BehavioralProvider({ children }: { children: React.ReactNode }) 
   };
 
   useEffect(() => {
+    // In MOCK_MODE skip all backend connectivity – trust score is fixed.
+    if (BACKEND_CONFIG.MOCK_MODE) {
+      return;
+    }
+
     wsService.onConnectionChange((connected) => {
       setIsConnected(connected);
       console.log('[BehavioralProvider] WebSocket connected:', connected);

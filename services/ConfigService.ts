@@ -4,6 +4,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BACKEND_CONFIG } from '@/config/backend';
 
 const CONFIG_KEY = 'cbsa_backend_config';
 
@@ -127,9 +128,13 @@ class ConfigService {
 
   /**
    * Check if backend is accessible.
+   * In MOCK_MODE always returns true without making a network call.
    * Throws on network-level failure so callers can surface the real reason.
    */
   async testConnection(): Promise<boolean> {
+    if (BACKEND_CONFIG.MOCK_MODE) {
+      return true;
+    }
     const restURL = await this.getRestURL();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -152,6 +157,7 @@ class ConfigService {
 
   /**
    * Call POST /login on the backend.
+   * In MOCK_MODE returns a mock "enrolled" response without a network call.
    * Returns the server's LoginResponse payload.
    */
   async loginUser(username: string): Promise<{
@@ -162,6 +168,16 @@ class ConfigService {
     accumulated_seconds?: number | null;
     total_seconds?: number | null;
   }> {
+    if (BACKEND_CONFIG.MOCK_MODE) {
+      return {
+        username,
+        status: 'enrolled',
+        message: 'Welcome back!',
+        seconds_remaining: null,
+        accumulated_seconds: null,
+        total_seconds: null,
+      };
+    }
     const restURL = await this.getRestURL();
     const response = await fetch(`${restURL}/login`, {
       method: 'POST',
@@ -177,8 +193,12 @@ class ConfigService {
 
   /**
    * Call POST /logout on the backend to save enrollment time.
+   * In MOCK_MODE this is a no-op.
    */
   async logoutUser(username: string): Promise<void> {
+    if (BACKEND_CONFIG.MOCK_MODE) {
+      return;
+    }
     try {
       const restURL = await this.getRestURL();
       await fetch(`${restURL}/logout`, {
