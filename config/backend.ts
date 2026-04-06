@@ -32,6 +32,11 @@ export const BACKEND_CONFIG = {
   
   // Connection timeout
   WS_CONNECTION_TIMEOUT_MS: 10000,
+
+  // When true the frontend runs without a backend server.
+  // - Login returns a mock "enrolled" response for any username.
+  // - Trust score is fixed at 0.8 (SAFE) and no WebSocket connection is made.
+  MOCK_MODE: true,
 };
 
 export default BACKEND_CONFIG;
