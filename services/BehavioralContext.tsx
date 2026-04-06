@@ -30,7 +30,7 @@ const INITIAL_TRUST_STATE: TrustState = {
 };
 
 // Fixed trust state used when MOCK_MODE is enabled (no backend required)
-const MOCK_TRUST_SCORE = 0.8;
+const MOCK_TRUST_SCORE = 0.3;
 const MOCK_TRUST_STATE: TrustState = {
   trustScore: MOCK_TRUST_SCORE,
   decision: 'SAFE',
